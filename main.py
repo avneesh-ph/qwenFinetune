@@ -1,5 +1,5 @@
 import torch
-# from unsloth import FastVisionModel
+# from unsloth import FastVisionModel, SFTTrainer
 from datasets import load_dataset
 import os
 import numpy as np
@@ -22,3 +22,28 @@ if torch.cuda.is_available():
 # print(f"GPU memory used: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
 
 datasetLoader = DatasetLoader("ift/handwriting_forms")
+# datasetLoader = DatasetLoader("HuggingFaceM4/ChartQA")
+datasetLoader.loadDataset()
+
+# Create the trainer
+# trainer = SFTTrainer(
+#     model=model,
+#     tokenizer=tokenizer,
+#     data_collator=UnslothVisionDataCollator(model, tokenizer),
+#     train_dataset=formatted_train,
+#     eval_dataset=formatted_eval,
+#     args=training_args,
+# )
+
+# # Check memory usage before training
+# print(f"GPU memory before training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
+
+# # Start training
+# print("\nStarting training...")
+# print("This will take 30-60 minutes depending on your hardware.")
+# print("=" * 60)
+
+# trainer.train()
+
+# print("\nTraining completed!")
+# print(f"GPU memory after training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
