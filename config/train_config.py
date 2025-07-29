@@ -1,3 +1,4 @@
+import torch
 from transformers import TrainingArguments
 from trl import SFTTrainer
 from unsloth.trainer import UnslothVisionDataCollator

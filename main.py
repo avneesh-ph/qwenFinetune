@@ -1,10 +1,13 @@
 import torch
-# from unsloth import FastVisionModel, SFTTrainer
+# from trl import SFTTrainer
+# from unsloth import FastVisionModel
 from datasets import load_dataset
 import os
 import numpy as np
 from PIL import Image
 from dataset.load import DatasetLoader
+from config.train_config import training_args
+from unsloth.trainer import UnslothVisionDataCollator
 
 # Check hardware capabilities
 print(f"CUDA available: {torch.cuda.is_available()}")
@@ -28,7 +31,7 @@ formatted_train, formatted_eval = datasetLoader.loadDataset()
 # Create the trainer
 # trainer = SFTTrainer(
 #     model=model,
-#     tokenizer=tokenizer,
+#     processing_class=tokenizer,
 #     data_collator=UnslothVisionDataCollator(model, tokenizer),
 #     train_dataset=formatted_train,
 #     eval_dataset=formatted_eval,
