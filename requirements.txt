@@ -67,7 +67,7 @@ regex
 requests
 rich
 safetensors
-sentencepiece @ file:///home/avneesh/Documents/projects/minorProject/sentencepiece-0.2.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256
+sentencepiece
 sentry-sdk
 setuptools
 shtab

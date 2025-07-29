@@ -17,7 +17,7 @@ class DatasetLoader():
 
     def training_prompt(self, sample):
         """Create training examples that mix detection and segmentation tasks"""
-        
+        # print("here", sample)
         system_message = """You are a Vision Language Model specialized in parsing forms, which may contain handwritten or system-generated text. Your task is to extract key information from the form and output it in a structured JSON format.
 
             * The form may include fields such as `NAME`, `DATE`, `CITY`, `STATE`, `ZIP`, etc., but the exact fields can vary.
@@ -85,7 +85,7 @@ class DatasetLoader():
     # Format samples for training
     def format_sample_for_training(self, samples):
         """Convert LVIS sample to Qwen training format"""
-        
+        # print(samples)
         # prompt = training_prompt(sample)
         return [self.training_prompt(sample) for sample in samples]
 
@@ -95,8 +95,10 @@ class DatasetLoader():
         train_subset = self._train.select(range(1000))  # Use 1000 samples
         eval_subset = self._validation.select(range(100))  # Use 100 for evaluation
 
-        formatted_train = train_subset.map(self.format_sample_for_training)
-        formatted_eval = eval_subset.map(self.format_sample_for_training)
+        # formatted_train = train_subset.map(self.training_prompt)
+        formatted_train = self.format_sample_for_training(train_subset)
+        formatted_eval = self.format_sample_for_training(eval_subset)
+        # formatted_eval = eval_subset.map(self.format_sample_for_training)
 
         print(f"Training samples ready: {len(formatted_train)}")
         print(f"Evaluation samples ready: {len(formatted_eval)}")
