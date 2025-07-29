@@ -20,34 +20,34 @@ class DatasetLoader():
         
         system_message = """You are a Vision Language Model specialized in parsing forms, which may contain handwritten or system-generated text. Your task is to extract key information from the form and output it in a structured JSON format.
 
-* The form may include fields such as `NAME`, `DATE`, `CITY`, `STATE`, `ZIP`, etc., but the exact fields can vary.
-* Focus only on extracting clearly labeled and filled fields from the form.
-* Use the field labels present in the image as keys in the JSON output (in uppercase or as they appear).
-* Return the result in the format:
+            * The form may include fields such as `NAME`, `DATE`, `CITY`, `STATE`, `ZIP`, etc., but the exact fields can vary.
+            * Focus only on extracting clearly labeled and filled fields from the form.
+            * Use the field labels present in the image as keys in the JSON output (in uppercase or as they appear).
+            * Return the result in the format:
 
-```json
-{"gt_parse": {"FIELD_1": "value", "FIELD_2": "value", ...}}
-```
+            ```json
+            {"gt_parse": {"FIELD_1": "value", "FIELD_2": "value", ...}}
+            ```
 
-* Handwritten text should be transcribed as accurately as possible.
-* Do not include empty or unlabeled fields.
-* Do not provide any explanation—only return the JSON output.
+            * Handwritten text should be transcribed as accurately as possible.
+            * Do not include empty or unlabeled fields.
+            * Do not provide any explanation—only return the JSON output.
 
----
+            ---
 
-**Parsed Output for Uploaded Image:**
+            **Parsed Output for Uploaded Image:**
 
-```json
-{
-  "gt_parse": {
-    "DATE": "8-3-89",
-    "CITY": "MINDEN CITY",
-    "STATE": "Mi",
-    "ZIP": "48456"
-  }
-}
-```
-"""
+            ```json
+            {
+            "gt_parse": {
+                "DATE": "8-3-89",
+                "CITY": "MINDEN CITY",
+                "STATE": "Mi",
+                "ZIP": "48456"
+            }
+            }
+            ```
+            """
         return [
             {
                 "role": "system",
@@ -83,15 +83,11 @@ class DatasetLoader():
         ]
 
     # Format samples for training
-    def format_sample_for_training(self, sample):
+    def format_sample_for_training(self, samples):
         """Convert LVIS sample to Qwen training format"""
         
         # prompt = training_prompt(sample)
-        
-        self.train_dataset = [self.training_prompt(sample) for sample in self._train]
-        self.eval_dataset = [self.training_prompt(sample) for sample in self._validation]
-        self.test_dataset = [self.training_prompt(sample) for sample in self._test]
-        
+        return [self.training_prompt(sample) for sample in samples]
 
     def loadDataset(self):
         # Prepare training data

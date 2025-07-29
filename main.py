@@ -23,7 +23,7 @@ if torch.cuda.is_available():
 
 datasetLoader = DatasetLoader("ift/handwriting_forms")
 # datasetLoader = DatasetLoader("HuggingFaceM4/ChartQA")
-datasetLoader.loadDataset()
+formatted_train, formatted_eval = datasetLoader.loadDataset()
 
 # Create the trainer
 # trainer = SFTTrainer(
