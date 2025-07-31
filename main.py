@@ -6,8 +6,8 @@ import os
 import numpy as np
 from PIL import Image
 from dataset.load import DatasetLoader
-from config.train_config import training_args
-from unsloth.trainer import UnslothVisionDataCollator
+# from config.train_config import training_args
+# from unsloth.trainer import UnslothVisionDataCollator
 
 # Check hardware capabilities
 print(f"CUDA available: {torch.cuda.is_available()}")
@@ -24,8 +24,30 @@ if torch.cuda.is_available():
 # print("Model loaded successfully!")
 # print(f"GPU memory used: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
 
-datasetLoader = DatasetLoader("ift/handwriting_forms")
-# datasetLoader = DatasetLoader("HuggingFaceM4/ChartQA")
+# Enable training mode
+# FastVisionModel.for_training(model)
+
+# Configure LoRA (Low-Rank Adaptation) for efficient training
+# model = FastVisionModel.get_peft_model(
+#     model,
+#     finetune_vision_layers=True,      # Train vision parts
+#     finetune_language_layers=True,    # Train language parts
+#     finetune_attention_modules=True,  # Train attention
+#     finetune_mlp_modules=True,        # Train decision making
+#     r=32,                            # Higher rank for complex tasks
+#     lora_alpha=32,                   # Scaling parameter
+#     lora_dropout=0.1,                # Prevent overfitting
+#     bias="none",
+#     random_state=3407,
+#     use_rslora=False,
+#     loftq_config=None,
+# )
+
+# print(f"Model ready for training!")
+# print(f"Trainable parameters: {model.num_parameters()}")
+
+# datasetLoader = DatasetLoader("ift/handwriting_forms")
+datasetLoader = DatasetLoader("winvoker/lvis")
 formatted_train, formatted_eval = datasetLoader.loadDataset()
 
 # Create the trainer

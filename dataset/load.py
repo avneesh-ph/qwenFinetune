@@ -49,33 +49,37 @@ class DatasetLoader():
         
 
     # Format samples for training
-    def format_sample_for_training(self, samples):
+    def format_sample_for_training(self, sample):
         """Convert LVIS sample to Qwen training format"""
-        # print(samples)
-        prompt = training_prompt()
+        print(sample)
         conversation = [
             {
                 "role": "system",
                 "content": [
                     {
                         "type": "text",
-                        "content": self.system_message
+                        "text": self.system_message  # ← Note: use 'text' key now
                     }
                 ]
             },
             {
-            "role": "user",
-            "content": [
+                "role": "user",
+                "content": [
                     {"type": "image"},
                     {"type": "text", "text": "extract data from the image in json"}
                 ]
             },
             {
-                "role": "assistant", 
-                "content": sample["ground_truth"]
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": sample["ground_truth"]  # ← Ensured to be wrapped in list
+                    }
+                ]
             }
         ]
-    
+
         return {
             "messages": conversation,
             "image": sample['image']
@@ -84,10 +88,10 @@ class DatasetLoader():
     def loadDataset(self):
         # Prepare training data
         print("Preparing training data...")
-        train_subset = self._train.select(range(1000))  # Use 1000 samples
-        eval_subset = self._validation.select(range(100))  # Use 100 for evaluation
+        train_subset = self._train.select(range(1))  # Use 1000 samples
+        eval_subset = self._validation.select(range(1))  # Use 100 for evaluation
 
-        formatted_train = train_subset.map(self.training_prompt)
+        formatted_train = train_subset.map(self.format_sample_for_training)
         formatted_eval = eval_subset.map(self.format_sample_for_training)
 
         print(f"Training samples ready: {len(formatted_train)}")
