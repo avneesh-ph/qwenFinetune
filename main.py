@@ -46,8 +46,8 @@ if torch.cuda.is_available():
 # print(f"Model ready for training!")
 # print(f"Trainable parameters: {model.num_parameters()}")
 
-# datasetLoader = DatasetLoader("ift/handwriting_forms")
-datasetLoader = DatasetLoader("winvoker/lvis")
+datasetLoader = DatasetLoader("ift/handwriting_forms")
+# datasetLoader = DatasetLoader("winvoker/lvis")
 formatted_train, formatted_eval = datasetLoader.loadDataset()
 
 # Create the trainer

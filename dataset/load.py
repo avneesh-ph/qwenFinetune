@@ -2,9 +2,10 @@ import random
 from datasets import load_dataset
 from PIL import Image
 from io import BytesIO
+import os
 
 class DatasetLoader():
-    def __init__(self, path):
+    def __init__(self, path, save_images = True):
         self._path = path
         self._dataset = load_dataset(self._path)
 
@@ -15,6 +16,7 @@ class DatasetLoader():
         self.train_dataset = None
         self.eval_dataset = None
         self.test_dataset = None
+        self.save_images = save_images
 
         self.system_message = """You are a Vision Language Model specialized in parsing forms, which may contain handwritten or system-generated text. Your task is to extract key information from the form and output it in a structured JSON format.
 
@@ -49,9 +51,24 @@ class DatasetLoader():
         
 
     # Format samples for training
-    def format_sample_for_training(self, sample):
+    def format_sample_for_training(self, sample, index):
         """Convert LVIS sample to Qwen training format"""
+        # print(os.getcwd())
         print(sample)
+        if self.save_images:
+            if not os.path.exists(f"{os.getcwd()}/data/{self._path}"):
+                output_dir = f"{os.getcwd()}/data/{self._path}"
+                os.makedirs(output_dir, exist_ok=True)
+                image = sample['image']
+    
+                # Generate filename
+                filename = f"image_{index:04d}.png"  # Will create image_0000.png, image_0001.png, etc.
+                image_path = os.path.join(output_dir, filename)
+                
+                # Save image
+                image.save(image_path)
+                # print(f"Saved {filename}")
+
         conversation = [
             {
                 "role": "system",
@@ -82,7 +99,7 @@ class DatasetLoader():
 
         return {
             "messages": conversation,
-            "image": sample['image']
+            "image": image_path
         }
 
     def loadDataset(self):
@@ -91,8 +108,8 @@ class DatasetLoader():
         train_subset = self._train.select(range(1))  # Use 1000 samples
         eval_subset = self._validation.select(range(1))  # Use 100 for evaluation
 
-        formatted_train = train_subset.map(self.format_sample_for_training)
-        formatted_eval = eval_subset.map(self.format_sample_for_training)
+        formatted_train = train_subset.map(self.format_sample_for_training, with_indices=True)
+        formatted_eval = eval_subset.map(self.format_sample_for_training, with_indices=True)
 
         print(f"Training samples ready: {len(formatted_train)}")
         print(f"Evaluation samples ready: {len(formatted_eval)}")
