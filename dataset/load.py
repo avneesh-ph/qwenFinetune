@@ -55,6 +55,7 @@ class DatasetLoader():
         """Convert LVIS sample to Qwen training format"""
         # print(os.getcwd())
         print(sample)
+        image_loc = None
         if self.save_images:
             if not os.path.exists(f"{os.getcwd()}/data/{self._path}"):
                 output_dir = f"{os.getcwd()}/data/{self._path}"
@@ -64,6 +65,7 @@ class DatasetLoader():
                 # Generate filename
                 filename = f"image_{index:04d}.png"  # Will create image_0000.png, image_0001.png, etc.
                 image_path = os.path.join(output_dir, filename)
+                image_loc = image_path
                 
                 # Save image
                 image.save(image_path)
@@ -99,7 +101,7 @@ class DatasetLoader():
 
         return {
             "messages": conversation,
-            "image": image_path
+            "image": image_loc
         }
 
     def loadDataset(self):
