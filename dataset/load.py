@@ -4,8 +4,43 @@ from PIL import Image
 from io import BytesIO
 import os
 
-class DatasetLoader():
-    def __init__(self, path, save_images = True):
+# Refactored formatting function outside of class
+def format_sample_for_training(sample, system_message):
+
+    conversation = [
+        {
+            "role": "system",
+            "content": [
+                {
+                    "type": "text",
+                    "text": system_message
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "extract data from the image in json"},
+                {"type": "image", "image": sample["image"]},
+            ]
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": sample["ground_truth"]
+                }
+            ]
+        }
+    ]
+    return {
+        "messages": conversation,
+    }
+
+# Now your DatasetLoader class:
+class DatasetLoader:
+    def __init__(self, path, save_images=True):
         self._path = path
         self._dataset = load_dataset(self._path)
 
@@ -16,7 +51,6 @@ class DatasetLoader():
         self.train_dataset = None
         self.eval_dataset = None
         self.test_dataset = None
-        self.save_images = save_images
 
         self.system_message = """You are a Vision Language Model specialized in parsing forms, which may contain handwritten or system-generated text. Your task is to extract key information from the form and output it in a structured JSON format.
 
@@ -48,70 +82,29 @@ class DatasetLoader():
             }
             ```
         """
-        
-
-    # Format samples for training
-    def format_sample_for_training(self, sample, index):
-        """Convert LVIS sample to Qwen training format"""
-        # print(os.getcwd())
-        print(sample)
-        image_loc = None
-        if self.save_images:
-            if not os.path.exists(f"{os.getcwd()}/data/{self._path}"):
-                output_dir = f"{os.getcwd()}/data/{self._path}"
-                os.makedirs(output_dir, exist_ok=True)
-                image = sample['image']
-    
-                # Generate filename
-                filename = f"image_{index:04d}.png"  # Will create image_0000.png, image_0001.png, etc.
-                image_path = os.path.join(output_dir, filename)
-                image_loc = image_path
-                
-                # Save image
-                image.save(image_path)
-                # print(f"Saved {filename}")
-
-        conversation = [
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": self.system_message  # ← Note: use 'text' key now
-                    }
-                ]
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image"},
-                    {"type": "text", "text": "extract data from the image in json"}
-                ]
-            },
-            {
-                "role": "assistant",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": sample["ground_truth"]  # ← Ensured to be wrapped in list
-                    }
-                ]
-            }
-        ]
-
-        return {
-            "messages": conversation,
-            "image": image_loc
-        }
 
     def loadDataset(self):
-        # Prepare training data
-        print("Preparing training data...")
-        train_subset = self._train.select(range(1))  # Use 1000 samples
-        eval_subset = self._validation.select(range(1))  # Use 100 for evaluation
+        base_path = os.getcwd()
+        
+        self.train_subset = self._train.select(range(1000))   # e.g. first 1000 samples for training
+        self.eval_subset = self._validation.select(range(100)) # e.g. 100 samples for eval
 
-        formatted_train = train_subset.map(self.format_sample_for_training, with_indices=True)
-        formatted_eval = eval_subset.map(self.format_sample_for_training, with_indices=True)
+        formatted_train = [format_sample_for_training(sample, self.system_message) for sample in self.train_subset]
+        formatted_eval = [format_sample_for_training(sample, self.system_message) for sample in self.eval_subset]
+
+        # formatted_train = self.train_subset.map(
+        #     format_sample_for_training,
+        #     fn_kwargs={
+        #         "system_message": self.system_message,
+        #     },
+        # )
+
+        # formatted_eval = self.eval_subset.map(
+        #     format_sample_for_training,
+        #     fn_kwargs={
+        #         "system_message": self.system_message,
+        #     },
+        # )
 
         print(f"Training samples ready: {len(formatted_train)}")
         print(f"Evaluation samples ready: {len(formatted_eval)}")

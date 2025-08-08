@@ -1,8 +1,8 @@
+from unsloth import FastVisionModel
+from unsloth.trainer import UnslothVisionDataCollator
+from config.train_config import training_args
 import torch
-# from unsloth import FastVisionModel
-# from unsloth.trainer import UnslothVisionDataCollator
-# from config.train_config import training_args
-# from trl import SFTTrainer
+from trl import SFTTrainer, SFTConfig
 from datasets import load_dataset
 import os
 import numpy as np
@@ -15,60 +15,79 @@ if torch.cuda.is_available():
     print(f"GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
 
 # Load Unsloth's 4-bit quantized Qwen 2.5-VL model
-# model, tokenizer = FastVisionModel.from_pretrained(
-#     "unsloth/Qwen2.5-VL-7B-Instruct-unsloth-bnb-4bit",
-#     load_in_4bit=True,
-#     use_gradient_checkpointing="unsloth"
-# )
+model, tokenizer = FastVisionModel.from_pretrained(
+    "unsloth/Qwen2.5-VL-7B-Instruct-unsloth-bnb-4bit",
+    load_in_4bit=True,
+    use_gradient_checkpointing="unsloth"
+)
 
-# print("Model loaded successfully!")
-# print(f"GPU memory used: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
-
-# Enable training mode
-# FastVisionModel.for_training(model)
+print("Model loaded successfully!")
+print(f"GPU memory used: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
 
 # Configure LoRA (Low-Rank Adaptation) for efficient training
-# model = FastVisionModel.get_peft_model(
-#     model,
-#     finetune_vision_layers=True,      # Train vision parts
-#     finetune_language_layers=True,    # Train language parts
-#     finetune_attention_modules=True,  # Train attention
-#     finetune_mlp_modules=True,        # Train decision making
-#     r=32,                            # Higher rank for complex tasks
-#     lora_alpha=32,                   # Scaling parameter
-#     lora_dropout=0.1,                # Prevent overfitting
-#     bias="none",
-#     random_state=3407,
-#     use_rslora=False,
-#     loftq_config=None,
-# )
+model = FastVisionModel.get_peft_model(
+    model,
+    finetune_vision_layers=True,      # Train vision parts
+    finetune_language_layers=True,    # Train language parts
+    finetune_attention_modules=True,  # Train attention
+    finetune_mlp_modules=True,        # Train decision making
+    r=16,                            # Higher rank for complex tasks
+    lora_alpha=16,                   # Scaling parameter
+    lora_dropout=0,                # Prevent overfitting
+    bias="none",
+    random_state=3407,
+    use_rslora=False,
+    loftq_config=None
+)
 
-# print(f"Model ready for training!")
-# print(f"Trainable parameters: {model.num_parameters()}")
+print(f"Model ready for training!")
+print(f"Trainable parameters: {model.num_parameters()}")
 
 datasetLoader = DatasetLoader("ift/handwriting_forms")
 # datasetLoader = DatasetLoader("winvoker/lvis")
 formatted_train, formatted_eval = datasetLoader.loadDataset()
+# print(formatted_train[0])
+# Enable training mode
+FastVisionModel.for_training(model)
 
 # Create the trainer
-# trainer = SFTTrainer(
-#     model=model,
-#     processing_class=tokenizer,
-#     data_collator=UnslothVisionDataCollator(model, tokenizer),
-#     train_dataset=formatted_train,
-#     eval_dataset=formatted_eval,
-#     args=training_args,
-# )
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    data_collator = UnslothVisionDataCollator(model, tokenizer), # Must use!
+    train_dataset = formatted_train,
+    args = SFTConfig(
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 5,
+        max_steps = 30,
+        # num_train_epochs = 1, # Set this instead of max_steps for full training runs
+        learning_rate = 2e-4,
+        logging_steps = 1,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        output_dir = "outputs",
+        report_to = "none",     # For Weights and Biases
+
+        # You MUST put the below items for vision finetuning:
+        remove_unused_columns = False,
+        dataset_text_field = "",
+        dataset_kwargs = {"skip_prepare_dataset": True},
+        max_length = 2048,
+    ),
+)
 
 # # Check memory usage before training
-# print(f"GPU memory before training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
+print(f"GPU memory before training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
 
-# # Start training
-# print("\nStarting training...")
-# print("This will take 30-60 minutes depending on your hardware.")
-# print("=" * 60)
+# Start training
+print("\nStarting training...")
+print("This will take 30-60 minutes depending on your hardware.")
+print("=" * 60)
 
-# trainer.train()
+trainer.train()
 
-# print("\nTraining completed!")
-# print(f"GPU memory after training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
+print("\nTraining completed!")
+print(f"GPU memory after training: {torch.cuda.memory_allocated()/1024**3:.2f} GB")
